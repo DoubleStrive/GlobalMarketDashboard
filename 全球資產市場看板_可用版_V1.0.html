@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全球資產市場看板 | 匯率 · TLT · 黃金現貨</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- TradingView Official Library -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+  <style>
+    * {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Smooth Transitions */
+    .theme-transition {
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+    }
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.7);
+    }
+    /* Pulse dot */
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .pulse-dot {
+      animation: pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    /* Price Flash Animations */
+    @keyframes flashGreen {
+      0% { background-color: rgba(16, 185, 129, 0.35); }
+      100% { background-color: transparent; }
+    }
+    @keyframes flashRed {
+      0% { background-color: rgba(244, 63, 94, 0.35); }
+      100% { background-color: transparent; }
+    }
+    .flash-up {
+      animation: flashGreen 1.2s ease-out;
+    }
+    .flash-down {
+      animation: flashRed 1.2s ease-out;
+    }
+    /* Smooth 10s countdown bar */
+    .countdown-bar {
+      transition: width 1s linear;
+    }
+    /* Light Mode Overrides */
+    html:not(.dark) body { background: #f8fafc !important; color: #0f172a !important; }
+    html:not(.dark) header,
+    html:not(.dark) .bg-slate-900 { background-color: #ffffff !important; }
+    html:not(.dark) .bg-slate-900\/90 { background-color: rgba(255,255,255,0.92) !important; }
+    html:not(.dark) .bg-slate-800,
+    html:not(.dark) .bg-slate-800\/90 { background-color: #f1f5f9 !important; }
+    html:not(.dark) .border-slate-800,
+    html:not(.dark) .border-slate-700,
+    html:not(.dark) .border-slate-700\/80 { border-color: #cbd5e1 !important; }
+    html:not(.dark) .text-white,
+    html:not(.dark) .text-slate-100,
+    html:not(.dark) .text-slate-200,
+    html:not(.dark) .text-slate-300 { color: #0f172a !important; }
+    html:not(.dark) .text-slate-400 { color: #475569 !important; }
+    html:not(.dark) .text-slate-500 { color: #64748b !important; }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen theme-transition flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 theme-transition px-3 lg:px-6 py-3 relative">
+    <div id="headerContainer" class="w-full max-w-none px-1 sm:px-2 flex flex-wrap items-center justify-between gap-3 transition-all duration-300">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-amber-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white font-bold text-xl">
+          🌐
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-2">
+              全球外匯 · TLT · 黃金市場看板
+            </h1>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+              6大市場指標
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">
+            公開資料源報價（可能延遲）· TLT 為美債 ETF，並非 20 年期殖利率 · 圖表由 TradingView 提供
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Toolbar -->
+      <div class="flex items-center flex-wrap gap-2">
+        <!-- Countdown & Auto-Refresh Control -->
+        <div class="inline-flex items-center gap-2 bg-slate-800/90 border border-slate-700 rounded-lg px-2.5 py-1 text-xs">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-emerald-400 animate-spin" id="refreshSpinner" style="animation-duration: 3s;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span class="text-slate-400">更新倒數:</span>
+            <span id="countdownDisplay" class="font-mono font-bold text-emerald-400 min-w-[32px]">60s</span>
+          </div>
+
+          <!-- Pause / Resume Button -->
+          <button id="btnPauseResume" onclick="toggleAutoRefresh()" title="暫停/繼續自動更新" class="p-1 hover:bg-slate-700 rounded text-slate-300 hover:text-white transition">
+            <svg id="iconPause" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <svg id="iconPlay" class="w-3.5 h-3.5 hidden text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </button>
+
+          <!-- Refresh Interval Selector -->
+          <select id="intervalSelector" onchange="setRefreshInterval(this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-1.5 py-0.5 text-[11px] focus:outline-none">
+            <option value="60" selected>60 秒</option>
+            <option value="300">5 分鐘</option>
+            <option value="900">15 分鐘</option>
+          </select>
+        </div>
+
+        <!-- Chart Timeframe Quick Selector -->
+        <div class="inline-flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs">
+          <button id="tf-1" onclick="setTimeframe('1')" title="1分鐘極短線 (即時動態)" class="px-2 py-1 rounded font-medium bg-emerald-600 text-white transition-all">1分</button>
+          <button id="tf-5" onclick="setTimeframe('5')" title="5分鐘走勢" class="px-2 py-1 rounded font-medium text-slate-300 hover:text-white transition-all">5分</button>
+          <button id="tf-60" onclick="setTimeframe('60')" title="1小時走勢" class="px-2 py-1 rounded font-medium text-slate-300 hover:text-white transition-all">1時</button>
+          <button id="tf-D" onclick="setTimeframe('D')" title="日K線" class="px-2 py-1 rounded font-medium text-slate-300 hover:text-white transition-all">日K</button>
+        </div>
+
+        <!-- Layout Mode Toggle -->
+        <div class="inline-flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs">
+          <button id="btnGrid" onclick="setLayout('grid')" title="多分割網格檢視" class="px-2.5 py-1.5 rounded-md font-medium transition-all bg-emerald-600 text-white shadow-sm">
+            <svg class="w-4 h-4 inline-block -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <span class="hidden md:inline ml-1">分割網格</span>
+          </button>
+          <button id="btnStack" onclick="setLayout('stack')" title="單欄並排滾動" class="px-2.5 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all">
+            <svg class="w-4 h-4 inline-block -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <span class="hidden md:inline ml-1">縱向清單</span>
+          </button>
+        </div>
+
+        <!-- Width Mode Toggle -->
+        <button id="btnWidthToggle" onclick="toggleWidthMode()" title="切換 100% 滿版 / 居中寬版" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-cyan-500/50 rounded-lg text-xs font-medium text-cyan-300 hover:text-white transition-all flex items-center gap-1.5 shadow-sm">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+          <span id="widthModeText" class="hidden sm:inline">100% 滿版中</span>
+        </button>
+
+        <!-- Chart Style Toggle -->
+        <div class="inline-flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs">
+          <button id="btnStyleArea" onclick="setChartStyle('3')" title="走勢面積圖" class="px-2.5 py-1.5 rounded-md font-medium transition-all bg-emerald-600 text-white shadow-sm">
+            折線
+          </button>
+          <button id="btnStyleCandle" onclick="setChartStyle('1')" title="專業K線圖" class="px-2.5 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all">
+            K線
+          </button>
+        </div>
+
+        <!-- Calculator Modal Trigger -->
+        <button onclick="toggleCalculator()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 hover:text-white transition-all flex items-center gap-1.5 shadow-sm">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          <span class="hidden sm:inline">換算機</span>
+        </button>
+
+        <!-- Light / Dark Mode Toggle -->
+        <button onclick="toggleTheme()" id="themeBtn" title="切換深色/淺色外觀" class="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all">
+          <svg id="themeIconSun" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          <svg id="themeIconMoon" class="w-4 h-4 hidden text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+
+        <!-- Manual Immediate Refresh -->
+        <button onclick="triggerImmediateRefresh()" title="立即手動更新" class="p-2 bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 rounded-lg text-white transition-all shadow-sm flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
+      </div>
+
+    </div>
+    <!-- Countdown Progress Bar underneath header -->
+    <div class="absolute bottom-0 left-0 h-[2px] bg-slate-800 w-full overflow-hidden">
+      <div id="countdownProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 countdown-bar" style="width: 100%;"></div>
+    </div>
+  </header>
+
+  <main id="mainContainer" class="flex-1 w-full max-w-none p-3 sm:p-4 lg:p-6 space-y-6 transition-all duration-300">
+    
+    <!-- Top Instant Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      
+      <!-- Card 1: USD/TWD -->
+      <div id="card-twd" class="bg-slate-900 border border-slate-800 rounded-xl p-3 relative overflow-hidden group hover:border-slate-700 transition-all shadow-sm">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🇹🇼</span>
+            <div>
+              <span class="text-[10px] font-semibold text-slate-400 block leading-tight">USD/TWD</span>
+              <h3 class="text-xs font-bold text-white leading-tight">新台幣</h3>
+            </div>
+          </div>
+          <a href="https://hk.finance.yahoo.com/quote/TWD=X/" target="_blank" rel="noopener noreferrer" 
+             title="在 Yahoo 財經開啟" 
+             class="text-[10px] text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded transition-colors">
+            Yahoo↗
+          </a>
+        </div>
+        <div class="flex items-baseline justify-between mt-1.5">
+          <div class="text-lg font-bold font-mono text-white transition-colors duration-300" id="val-twd">--.--</div>
+          <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" id="badge-twd">
+            等待資料
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5 flex justify-between items-center">
+          <span id="range-twd">高:-- 低:--</span>
+          <span id="time-twd" class="text-slate-400 font-mono">未更新</span>
+        </div>
+      </div>
+
+      <!-- Card 2: USD/CNY -->
+      <div id="card-cny" class="bg-slate-900 border border-slate-800 rounded-xl p-3 relative overflow-hidden group hover:border-slate-700 transition-all shadow-sm">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🇨🇳</span>
+            <div>
+              <span class="text-[10px] font-semibold text-slate-400 block leading-tight">USD/CNY</span>
+              <h3 class="text-xs font-bold text-white leading-tight">人民幣</h3>
+            </div>
+          </div>
+          <a href="https://hk.finance.yahoo.com/quote/CNY=X/" target="_blank" rel="noopener noreferrer" 
+             title="在 Yahoo 財經開啟" 
+             class="text-[10px] text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded transition-colors">
+            Yahoo↗
+          </a>
+        </div>
+        <div class="flex items-baseline justify-between mt-1.5">
+          <div class="text-lg font-bold font-mono text-white transition-colors duration-300" id="val-cny">--.----</div>
+          <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" id="badge-cny">
+            等待資料
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5 flex justify-between items-center">
+          <span id="range-cny">高:-- 低:--</span>
+          <span id="time-cny" class="text-slate-400 font-mono">未更新</span>
+        </div>
+      </div>
+
+      <!-- Card 3: USD/JPY -->
+      <div id="card-jpy" class="bg-slate-900 border border-slate-800 rounded-xl p-3 relative overflow-hidden group hover:border-slate-700 transition-all shadow-sm">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🇯🇵</span>
+            <div>
+              <span class="text-[10px] font-semibold text-slate-400 block leading-tight">USD/JPY</span>
+              <h3 class="text-xs font-bold text-white leading-tight">日圓</h3>
+            </div>
+          </div>
+          <a href="https://hk.finance.yahoo.com/quote/JPY=X/" target="_blank" rel="noopener noreferrer" 
+             title="在 Yahoo 財經開啟" 
+             class="text-[10px] text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded transition-colors">
+            Yahoo↗
+          </a>
+        </div>
+        <div class="flex items-baseline justify-between mt-1.5">
+          <div class="text-lg font-bold font-mono text-white transition-colors duration-300" id="val-jpy">--.--</div>
+          <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" id="badge-jpy">
+            等待資料
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5 flex justify-between items-center">
+          <span id="range-jpy">高:-- 低:--</span>
+          <span id="time-jpy" class="text-slate-400 font-mono">未更新</span>
+        </div>
+      </div>
+
+      <!-- Card 4: USD/THB -->
+      <div id="card-thb" class="bg-slate-900 border border-slate-800 rounded-xl p-3 relative overflow-hidden group hover:border-slate-700 transition-all shadow-sm">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🇹🇭</span>
+            <div>
+              <span class="text-[10px] font-semibold text-slate-400 block leading-tight">USD/THB</span>
+              <h3 class="text-xs font-bold text-white leading-tight">泰銖</h3>
+            </div>
+          </div>
+          <a href="https://hk.finance.yahoo.com/quote/THB=X/" target="_blank" rel="noopener noreferrer" 
+             title="在 Yahoo 財經開啟" 
+             class="text-[10px] text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded transition-colors">
+            Yahoo↗
+          </a>
+        </div>
+        <div class="flex items-baseline justify-between mt-1.5">
+          <div class="text-lg font-bold font-mono text-white transition-colors duration-300" id="val-thb">--.--</div>
+          <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" id="badge-thb">
+            等待資料
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5 flex justify-between items-center">
+          <span id="range-thb">高:-- 低:--</span>
+          <span id="time-thb" class="text-slate-400 font-mono">未更新</span>
+        </div>
+      </div>
+
+      <!-- Card 5: US 20-Year Bond (TLT) -->
+      <div id="card-us20y" class="bg-slate-900 border border-indigo-900/40 rounded-xl p-3 relative overflow-hidden group hover:border-indigo-500/50 transition-all shadow-sm">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🏛️</span>
+            <div>
+              <span class="text-[10px] font-semibold text-indigo-300 block leading-tight">NASDAQ:TLT</span>
+              <h3 class="text-xs font-bold text-white leading-tight">20+年美債 ETF</h3>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <a href="https://tw.tradingview.com/symbols/NASDAQ-TLT/" target="_blank" rel="noopener noreferrer" 
+               title="在 TradingView 查看 TLT" 
+               class="text-[10px] text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-1 py-0.5 rounded transition-colors">
+              TLT↗
+            </a>
+            <a href="https://hk.investing.com/rates-bonds/us-20-year-bond-yield" target="_blank" rel="noopener noreferrer" 
+               title="在 Investing.com 開啟 20Y 殖利率" 
+               class="text-[10px] text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-1 py-0.5 rounded transition-colors">
+              殖利率↗
+            </a>
+          </div>
+        </div>
+        <div class="flex items-baseline justify-between mt-1.5">
+          <div class="text-base font-bold font-mono text-indigo-300 transition-colors duration-300" id="val-us20y">查看即時圖表</div>
+          <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-400 border border-indigo-500/20" id="badge-us20y">
+            TV 即時圖
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5 flex justify-between items-center">
+          <span id="range-us20y">圖表已直接內嵌</span>
+          <span id="time-us20y" class="text-slate-400 font-mono">即時連動</span>
+        </div>
+      </div>
+
+      <!-- Card 6: Gold Spot (XAU/USD) -->
+      <div id="card-xau" class="bg-slate-900 border border-amber-900/40 rounded-xl p-3 relative overflow-hidden group hover:border-amber-500/50 transition-all shadow-sm">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🥇</span>
+            <div>
+              <span class="text-[10px] font-semibold text-amber-300 block leading-tight">XAU/USD</span>
+              <h3 class="text-xs font-bold text-white leading-tight">現貨黃金</h3>
+            </div>
+          </div>
+          <a href="https://hk.investing.com/currencies/xau-usd" target="_blank" rel="noopener noreferrer" 
+             title="在 Investing.com 開啟" 
+             class="text-[10px] text-amber-400 hover:text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded transition-colors">
+            Investing↗
+          </a>
+        </div>
+        <div class="flex items-baseline justify-between mt-1.5">
+          <div class="text-lg font-bold font-mono text-amber-300 transition-colors duration-300" id="val-xau">$--.--</div>
+          <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" id="badge-xau">
+            等待資料
+          </span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1.5 flex justify-between items-center">
+          <span id="range-xau">高:-- 低:--</span>
+          <span id="time-xau" class="text-slate-400 font-mono">未更新</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Charts Container -->
+    <div id="chartsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      
+      <!-- Chart Box 1: USD/TWD -->
+      <div class="chart-box bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-lg" id="panel-twd">
+        <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🇹🇼</span>
+            <span class="font-bold text-sm text-white">美元 / 新台幣 (USD/TWD)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">TWD=X</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleMaximize('panel-twd')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="放大/縮小此視窗">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <a href="https://hk.finance.yahoo.com/quote/TWD=X/" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center gap-1">
+              Yahoo ↗
+            </a>
+          </div>
+        </div>
+        <div class="relative w-full h-[360px] bg-slate-950/40" id="tradingview_usdtwd">
+          <div class="w-full h-full flex items-center justify-center text-slate-500 text-xs font-mono">載入 USD/TWD 圖表中...</div>
+        </div>
+      </div>
+
+      <!-- Chart Box 2: USD/CNY -->
+      <div class="chart-box bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-lg" id="panel-cny">
+        <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🇨🇳</span>
+            <span class="font-bold text-sm text-white">美元 / 人民幣 (USD/CNY)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">CNY=X</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleMaximize('panel-cny')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="放大/縮小此視窗">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <a href="https://hk.finance.yahoo.com/quote/CNY=X/" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center gap-1">
+              Yahoo ↗
+            </a>
+          </div>
+        </div>
+        <div class="relative w-full h-[360px] bg-slate-950/40" id="tradingview_usdcny">
+          <div class="w-full h-full flex items-center justify-center text-slate-500 text-xs font-mono">載入 USD/CNY 圖表中...</div>
+        </div>
+      </div>
+
+      <!-- Chart Box 3: USD/JPY -->
+      <div class="chart-box bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-lg" id="panel-jpy">
+        <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🇯🇵</span>
+            <span class="font-bold text-sm text-white">美元 / 日圓 (USD/JPY)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">JPY=X</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleMaximize('panel-jpy')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="放大/縮小此視窗">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <a href="https://hk.finance.yahoo.com/quote/JPY=X/" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center gap-1">
+              Yahoo ↗
+            </a>
+          </div>
+        </div>
+        <div class="relative w-full h-[360px] bg-slate-950/40" id="tradingview_usdjpy">
+          <div class="w-full h-full flex items-center justify-center text-slate-500 text-xs font-mono">載入 USD/JPY 圖表中...</div>
+        </div>
+      </div>
+
+      <!-- Chart Box 4: USD/THB -->
+      <div class="chart-box bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-lg" id="panel-thb">
+        <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🇹🇭</span>
+            <span class="font-bold text-sm text-white">美元 / 泰銖 (USD/THB)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">THB=X</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleMaximize('panel-thb')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="放大/縮小此視窗">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <a href="https://hk.finance.yahoo.com/quote/THB=X/" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center gap-1">
+              Yahoo ↗
+            </a>
+          </div>
+        </div>
+        <div class="relative w-full h-[360px] bg-slate-950/40" id="tradingview_usdthb">
+          <div class="w-full h-full flex items-center justify-center text-slate-500 text-xs font-mono">載入 USD/THB 圖表中...</div>
+        </div>
+      </div>
+
+      <!-- Chart Box 5: US 20Y Bond (NASDAQ:TLT) -->
+      <div class="chart-box bg-slate-900 border border-indigo-900/50 rounded-xl overflow-hidden flex flex-col shadow-lg" id="panel-us20y">
+        <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🏛️</span>
+            <span class="font-bold text-sm text-white">20+ 年美債 ETF (iShares TLT)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-indigo-900/40 text-indigo-300 font-mono">NASDAQ:TLT</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 hidden sm:inline">
+              圖表即時連動
+            </span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleMaximize('panel-us20y')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="放大/縮小此視窗">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <a href="https://tw.tradingview.com/symbols/NASDAQ-TLT/" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-1 rounded bg-indigo-900/40 hover:bg-indigo-800/70 text-indigo-300 hover:text-white transition flex items-center gap-1">
+              TV 圖表 ↗
+            </a>
+            <a href="https://hk.investing.com/rates-bonds/us-20-year-bond-yield" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-1 rounded bg-indigo-900/50 hover:bg-indigo-800/80 text-indigo-200 hover:text-white transition flex items-center gap-1">
+              Investing ↗
+            </a>
+          </div>
+        </div>
+        <div class="relative w-full h-[360px] bg-slate-950/40" id="tradingview_us20y">
+          <div class="w-full h-full flex items-center justify-center text-slate-500 text-xs font-mono">載入 TLT 美債圖表中...</div>
+        </div>
+      </div>
+
+      <!-- Chart Box 6: Gold Spot XAU/USD -->
+      <div class="chart-box bg-slate-900 border border-amber-900/50 rounded-xl overflow-hidden flex flex-col shadow-lg" id="panel-xau">
+        <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🥇</span>
+            <span class="font-bold text-sm text-white">國際現貨黃金 (Gold Spot XAU/USD)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-amber-900/40 text-amber-300 font-mono">TVC:GOLD</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleMaximize('panel-xau')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition" title="放大/縮小此視窗">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <a href="https://hk.investing.com/currencies/xau-usd" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-1 rounded bg-amber-900/50 hover:bg-amber-800/80 text-amber-200 hover:text-white transition flex items-center gap-1">
+              Investing ↗
+            </a>
+          </div>
+        </div>
+        <div class="relative w-full h-[360px] bg-slate-950/40" id="tradingview_xauusd">
+          <div class="w-full h-full flex items-center justify-center text-slate-500 text-xs font-mono">載入 XAU/USD 黃金現貨圖表中...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Technical Note Banner -->
+    <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div class="space-y-1">
+        <p class="font-medium text-slate-300 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          數據源整合說明：TradingView TVC 官方綜合行情
+        </p>
+        <p class="text-slate-500">
+          由於 TradingView 對國債殖利率原始數據（<code class="text-indigo-300">TVC:US20Y</code>）設有第三方外嵌版權限制，系統已切換至核心 20 年美債基準標的 <code class="text-indigo-300">NASDAQ:TLT</code>（iShares 20+ Year Treasury Bond ETF），圖表與美債價格同步即時連動。黃金現貨使用完全開放的 <code class="text-amber-300">TVC:GOLD</code>。
+        </p>
+      </div>
+      <div class="flex items-center flex-wrap gap-2 flex-shrink-0">
+        <span class="text-slate-400">來源捷徑：</span>
+        <a href="https://hk.finance.yahoo.com/quote/TWD=X/" target="_blank" rel="noopener" class="text-emerald-400 hover:underline">TWD</a> ·
+        <a href="https://hk.finance.yahoo.com/quote/CNY=X/" target="_blank" rel="noopener" class="text-emerald-400 hover:underline">CNY</a> ·
+        <a href="https://hk.finance.yahoo.com/quote/JPY=X/" target="_blank" rel="noopener" class="text-emerald-400 hover:underline">JPY</a> ·
+        <a href="https://hk.finance.yahoo.com/quote/THB=X/" target="_blank" rel="noopener" class="text-emerald-400 hover:underline">THB</a> ·
+        <a href="https://tw.tradingview.com/symbols/NASDAQ-TLT/" target="_blank" rel="noopener" class="text-indigo-400 hover:underline">TLT (TradingView)</a> ·
+        <a href="https://hk.investing.com/rates-bonds/us-20-year-bond-yield" target="_blank" rel="noopener" class="text-indigo-400 hover:underline">美債20Y (Investing)</a> ·
+        <a href="https://hk.investing.com/currencies/xau-usd" target="_blank" rel="noopener" class="text-amber-400 hover:underline">黃金現貨 (Investing)</a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Cross Currency Calculator Modal -->
+  <div id="calculatorModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative text-slate-100">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-white">參考匯率換算器</h3>
+            <p class="text-xs text-slate-400">快速計算台幣、美金、日圓、人民幣、泰銖交叉匯率</p>
+          </div>
+        </div>
+        <button onclick="toggleCalculator()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 pt-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">輸入金額與基準幣別</label>
+          <div class="grid grid-cols-3 gap-2">
+            <input type="number" id="calcAmount" value="1000" oninput="calculateRates()" class="col-span-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-mono font-bold text-lg focus:outline-none focus:border-emerald-500">
+            <select id="calcBase" onchange="calculateRates()" class="col-span-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-emerald-500">
+              <option value="USD">USD 美元</option>
+              <option value="TWD" selected>TWD 台幣</option>
+              <option value="JPY">JPY 日圓</option>
+              <option value="CNY">CNY 人民幣</option>
+              <option value="THB">THB 泰銖</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">參考等值換算結果</label>
+          <div class="grid grid-cols-2 gap-2.5" id="calcResultsContainer"></div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800">
+          <p class="text-xs text-slate-400 mb-2">熱門速算：</p>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <button onclick="setQuickCalc('TWD', 10000)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-300">1萬 新台幣</button>
+            <button onclick="setQuickCalc('USD', 100)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-300">100 美金</button>
+            <button onclick="setQuickCalc('JPY', 100000)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-300">10萬 日圓</button>
+            <button onclick="setQuickCalc('THB', 5000)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded-md text-slate-300">5,000 泰銖</button>
+            <button onclick="calcGoldOunce()" class="px-2.5 py-1 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded-md border border-amber-500/30">1盎司黃金 換算台幣</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    let currentTheme = 'dark';
+    let currentStyle = '3'; // '3' = Area, '1' = Candles
+    let currentLayout = 'grid';
+    let currentTimeframe = '1';
+    let maximizedPanelId = null;
+    let isFullWidth = true;
+
+    // Refresh engine
+    let refreshSeconds = 60;
+    let countdownRemaining = 60;
+    let isAutoRefreshPaused = false;
+    let countdownIntervalId = null;
+    let nextRefreshAt = Date.now() + refreshSeconds * 1000;
+    let pausedRemainingMs = null;
+    let isUpdating = false;
+
+    // Exchange rates cache against 1 USD
+    let rates = {
+      USD: 1.0,
+      TWD: null,
+      CNY: null,
+      JPY: null,
+      THB: null,
+      US20Y: null,
+      XAU: null
+    };
+
+    const ASSET_CONFIG = [
+      {
+        id: 'twd',
+        pair: 'USD/TWD',
+        name: '美元 / 新台幣',
+        tvSymbol: 'FX_IDC:USDTWD',
+        containerId: 'tradingview_usdtwd',
+        decimals: 2,
+        prefix: '',
+        suffix: ''
+      },
+      {
+        id: 'cny',
+        pair: 'USD/CNY',
+        name: '美元 / 人民幣',
+        tvSymbol: 'FX_IDC:USDCNY',
+        containerId: 'tradingview_usdcny',
+        decimals: 4,
+        prefix: '',
+        suffix: ''
+      },
+      {
+        id: 'jpy',
+        pair: 'USD/JPY',
+        name: '美元 / 日圓',
+        tvSymbol: 'FX_IDC:USDJPY',
+        containerId: 'tradingview_usdjpy',
+        decimals: 2,
+        prefix: '',
+        suffix: ''
+      },
+      {
+        id: 'thb',
+        pair: 'USD/THB',
+        name: '美元 / 泰銖',
+        tvSymbol: 'FX_IDC:USDTHB',
+        containerId: 'tradingview_usdthb',
+        decimals: 2,
+        prefix: '',
+        suffix: ''
+      },
+      {
+        id: 'us20y',
+        pair: 'TLT',
+        name: '美債20年ETF (TLT)',
+        tvSymbol: 'NASDAQ:TLT',
+        containerId: 'tradingview_us20y',
+        decimals: 2,
+        prefix: '$',
+        suffix: ''
+      },
+      {
+        id: 'xau',
+        pair: 'XAU/USD',
+        name: '國際現貨黃金',
+        tvSymbol: 'TVC:GOLD',
+        containerId: 'tradingview_xauusd',
+        decimals: 2,
+        prefix: '$',
+        suffix: ''
+      }
+    ];
+
+    function renderChart(config) {
+      const container = document.getElementById(config.containerId);
+      if (!container) return;
+
+      container.innerHTML = '';
+      if (!window.TradingView || !TradingView.widget) {
+        container.innerHTML = '<div class="h-full flex items-center justify-center text-sm text-slate-400">TradingView 圖表載入失敗，請檢查網路連線</div>';
+        return;
+      }
+
+      new TradingView.widget({
+        "autosize": true,
+        "symbol": config.tvSymbol,
+        "interval": currentTimeframe,
+        "timezone": "Asia/Taipei",
+        "theme": currentTheme,
+        "style": currentStyle,
+        "locale": "zh_TW",
+        "toolbar_bg": currentTheme === 'dark' ? "#0f172a" : "#ffffff",
+        "enable_publishing": false,
+        "allow_symbol_change": true,
+        "container_id": config.containerId,
+        "hide_side_toolbar": false,
+        "studies": [
+          "MASimple@tv-basicstudies"
+        ],
+        "show_popup_button": true,
+        "popup_width": "1000",
+        "popup_height": "650"
+      });
+    }
+
+    function reloadAllCharts() {
+      ASSET_CONFIG.forEach(item => {
+        renderChart(item);
+      });
+    }
+
+    function setTimeframe(tf) {
+      currentTimeframe = tf;
+      ['1', '5', '60', 'D'].forEach(t => {
+        const btn = document.getElementById(`tf-${t}`);
+        if (btn) {
+          if (t === tf) {
+            btn.className = 'px-2 py-1 rounded font-medium bg-emerald-600 text-white transition-all';
+          } else {
+            btn.className = 'px-2 py-1 rounded font-medium text-slate-300 hover:text-white transition-all';
+          }
+        }
+      });
+      reloadAllCharts();
+    }
+
+    function setChartStyle(style) {
+      currentStyle = style;
+      const btnArea = document.getElementById('btnStyleArea');
+      const btnCandle = document.getElementById('btnStyleCandle');
+      if (style === '3') {
+        if (btnArea) btnArea.className = 'px-2.5 py-1.5 rounded-md font-medium transition-all bg-emerald-600 text-white shadow-sm';
+        if (btnCandle) btnCandle.className = 'px-2.5 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all';
+      } else {
+        if (btnCandle) btnCandle.className = 'px-2.5 py-1.5 rounded-md font-medium transition-all bg-emerald-600 text-white shadow-sm';
+        if (btnArea) btnArea.className = 'px-2.5 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all';
+      }
+      reloadAllCharts();
+    }
+
+    function setLayout(mode) {
+      currentLayout = mode;
+      const container = document.getElementById('chartsContainer');
+      const btnGrid = document.getElementById('btnGrid');
+      const btnStack = document.getElementById('btnStack');
+
+      if (maximizedPanelId) {
+        toggleMaximize(maximizedPanelId);
+      }
+
+      if (mode === 'grid') {
+        container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+        if (btnGrid) btnGrid.className = 'px-2.5 py-1.5 rounded-md font-medium transition-all bg-emerald-600 text-white shadow-sm';
+        if (btnStack) btnStack.className = 'px-2.5 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all';
+      } else {
+        container.className = 'flex flex-col space-y-4';
+        if (btnStack) btnStack.className = 'px-2.5 py-1.5 rounded-md font-medium transition-all bg-emerald-600 text-white shadow-sm';
+        if (btnGrid) btnGrid.className = 'px-2.5 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all';
+      }
+
+      setTimeout(reloadAllCharts, 100);
+    }
+
+    function toggleWidthMode() {
+      isFullWidth = !isFullWidth;
+      const headerCont = document.getElementById('headerContainer');
+      const mainCont = document.getElementById('mainContainer');
+      const textEl = document.getElementById('widthModeText');
+      const btnEl = document.getElementById('btnWidthToggle');
+
+      if (isFullWidth) {
+        headerCont.className = 'w-full max-w-none px-1 sm:px-2 flex flex-wrap items-center justify-between gap-3 transition-all duration-300';
+        mainCont.className = 'flex-1 w-full max-w-none p-3 sm:p-4 lg:p-6 space-y-6 transition-all duration-300';
+        if (textEl) textEl.innerText = '100% 滿版中';
+        if (btnEl) {
+          btnEl.className = 'px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-cyan-500/50 rounded-lg text-xs font-medium text-cyan-300 hover:text-white transition-all flex items-center gap-1.5 shadow-sm';
+        }
+      } else {
+        headerCont.className = 'w-full max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 transition-all duration-300';
+        mainCont.className = 'flex-1 w-full max-w-7xl mx-auto p-4 lg:p-6 space-y-6 transition-all duration-300';
+        if (textEl) textEl.innerText = '切換 100% 滿版';
+        if (btnEl) {
+          btnEl.className = 'px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 shadow-sm';
+        }
+      }
+
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 300);
+    }
+
+    function toggleMaximize(panelId) {
+      const targetPanel = document.getElementById(panelId);
+      const allPanels = document.querySelectorAll('.chart-box');
+      const container = document.getElementById('chartsContainer');
+
+      if (maximizedPanelId === panelId) {
+        maximizedPanelId = null;
+        allPanels.forEach(p => p.classList.remove('hidden'));
+        if (currentLayout === 'grid') {
+          container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+        } else {
+          container.className = 'flex flex-col space-y-4';
+        }
+        const innerChart = targetPanel.querySelector('[id^="tradingview_"]');
+        if (innerChart) innerChart.style.height = '360px';
+      } else {
+        maximizedPanelId = panelId;
+        allPanels.forEach(p => {
+          if (p.id !== panelId) p.classList.add('hidden');
+          else p.classList.remove('hidden');
+        });
+        container.className = 'w-full';
+        const innerChart = targetPanel.querySelector('[id^="tradingview_"]');
+        if (innerChart) innerChart.style.height = '680px';
+      }
+
+      setTimeout(reloadAllCharts, 150);
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const sunIcon = document.getElementById('themeIconSun');
+      const moonIcon = document.getElementById('themeIconMoon');
+
+      if (currentTheme === 'dark') {
+        currentTheme = 'light';
+        html.classList.remove('dark');
+        sunIcon?.classList.add('hidden');
+        moonIcon?.classList.remove('hidden');
+      } else {
+        currentTheme = 'dark';
+        html.classList.add('dark');
+        sunIcon?.classList.remove('hidden');
+        moonIcon?.classList.add('hidden');
+      }
+      try { localStorage.setItem('market-dashboard-theme', currentTheme); } catch (_) {}
+      reloadAllCharts();
+    }
+
+    function startCountdownTimer() {
+      if (countdownIntervalId) clearInterval(countdownIntervalId);
+      nextRefreshAt = Date.now() + refreshSeconds * 1000;
+      countdownIntervalId = setInterval(() => {
+        if (isAutoRefreshPaused) return;
+        const msLeft = nextRefreshAt - Date.now();
+        countdownRemaining = Math.max(0, Math.ceil(msLeft / 1000));
+        if (msLeft <= 0) {
+          nextRefreshAt = Date.now() + refreshSeconds * 1000;
+          countdownRemaining = refreshSeconds;
+          void triggerRateUpdate();
+        }
+        updateCountdownUI();
+      }, 250);
+    }
+
+    function updateCountdownUI() {
+      const display = document.getElementById('countdownDisplay');
+      const bar = document.getElementById('countdownProgressBar');
+      if (display) display.innerText = `${countdownRemaining}s`;
+
+      if (bar) {
+        const percentage = (countdownRemaining / refreshSeconds) * 100;
+        bar.style.width = `${percentage}%`;
+      }
+    }
+
+    function toggleAutoRefresh() {
+      isAutoRefreshPaused = !isAutoRefreshPaused;
+      const iconPause = document.getElementById('iconPause');
+      const iconPlay = document.getElementById('iconPlay');
+      const spinner = document.getElementById('refreshSpinner');
+
+      if (isAutoRefreshPaused) {
+        pausedRemainingMs = Math.max(0, nextRefreshAt - Date.now());
+        iconPause?.classList.add('hidden');
+        iconPlay?.classList.remove('hidden');
+        if (spinner) spinner.style.animationPlayState = 'paused';
+      } else {
+        nextRefreshAt = Date.now() + (pausedRemainingMs ?? refreshSeconds * 1000);
+        pausedRemainingMs = null;
+        iconPause?.classList.remove('hidden');
+        iconPlay?.classList.add('hidden');
+        if (spinner) spinner.style.animationPlayState = 'running';
+      }
+    }
+
+    function setRefreshInterval(seconds) {
+      refreshSeconds = parseInt(seconds, 10) || 60;
+      countdownRemaining = refreshSeconds;
+      if (isAutoRefreshPaused) {
+        pausedRemainingMs = refreshSeconds * 1000;
+      } else {
+        nextRefreshAt = Date.now() + refreshSeconds * 1000;
+      }
+      updateCountdownUI();
+    }
+
+    function triggerImmediateRefresh() {
+      countdownRemaining = refreshSeconds;
+      nextRefreshAt = Date.now() + refreshSeconds * 1000;
+      if (isAutoRefreshPaused) {
+        pausedRemainingMs = refreshSeconds * 1000;
+      }
+      updateCountdownUI();
+      void triggerRateUpdate();
+    }
+
+    function fetchWithTimeout(url, options = {}, timeoutMs = 9000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { ...options, signal: controller.signal, cache: 'no-store' })
+        .finally(() => clearTimeout(timeoutId));
+    }
+
+    function setSourceState(id, message, tone = 'neutral') {
+      const badgeEl = document.getElementById(`badge-${id}`);
+      if (!badgeEl) return;
+      const tones = {
+        good: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+        warning: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+        bad: 'bg-rose-500/15 text-rose-400 border-rose-500/20',
+        neutral: 'bg-slate-500/15 text-slate-400 border-slate-500/20'
+      };
+      badgeEl.className = `text-[10px] font-medium px-1.5 py-0.5 rounded border ${tones[tone] || tones.neutral}`;
+      badgeEl.innerText = message;
+    }
+
+    function formatSourceTime(value) {
+      const date = value ? new Date(value) : new Date();
+      return Number.isNaN(date.getTime()) ? '時間未知' : date.toLocaleString('zh-TW', { hour12: false });
+    }
+
+    function updateCardUI(id, quote, oldPrice, decimals, prefix = '', suffix = '') {
+      const valEl = document.getElementById(`val-${id}`);
+      const cardEl = document.getElementById(`card-${id}`);
+      const rangeEl = document.getElementById(`range-${id}`);
+      const timeEl = document.getElementById(`time-${id}`);
+      if (!valEl) return;
+
+      if (!quote || !Number.isFinite(quote.price)) {
+        if (id === 'us20y') {
+          valEl.innerText = '查看即時圖表';
+          if (rangeEl) rangeEl.innerText = '圖表已直接內嵌';
+          if (timeEl) timeEl.innerText = '即時連動';
+          setSourceState(id, 'TV 即時圖', 'neutral');
+          return;
+        }
+
+        valEl.innerText = '暫無資料';
+        if (rangeEl) rangeEl.innerText = quote?.detail || '瀏覽器無法取得公開報價';
+        if (timeEl) timeEl.innerText = '未更新';
+        setSourceState(id, '無法取得', 'bad');
+        return;
+      }
+
+      valEl.innerText = `${prefix}${quote.price.toFixed(decimals)}${suffix}`;
+      if (rangeEl) {
+        const hasRange = Number.isFinite(quote.high) && Number.isFinite(quote.low);
+        rangeEl.innerText = hasRange
+          ? `高:${quote.high.toFixed(decimals)} 低:${quote.low.toFixed(decimals)}`
+          : `來源：${quote.source}｜無公開高低價`;
+      }
+      if (timeEl) timeEl.innerText = formatSourceTime(quote.timestamp);
+
+      if (Number.isFinite(quote.changePct)) {
+        const sign = quote.changePct >= 0 ? '+' : '';
+        setSourceState(id, `${sign}${quote.changePct.toFixed(2)}%`, quote.changePct >= 0 ? 'good' : 'bad');
+      } else {
+        setSourceState(id, quote.status || '延遲報價', 'warning');
+      }
+
+      if (cardEl && Number.isFinite(oldPrice)) {
+        cardEl.classList.remove('flash-up', 'flash-down');
+        void cardEl.offsetWidth;
+        if (quote.price > oldPrice) cardEl.classList.add('flash-up');
+        if (quote.price < oldPrice) cardEl.classList.add('flash-down');
+      }
+    }
+
+    async function fetchForexQuotes() {
+      const res = await fetchWithTimeout(`https://open.er-api.com/v6/latest/USD?_=${Date.now()}`);
+      if (!res.ok) throw new Error(`FX HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.result !== 'success' || !data.rates) throw new Error('Invalid FX response');
+      const sourceTime = data.time_last_update_utc || (data.time_last_update_unix ? data.time_last_update_unix * 1000 : null);
+      const staleHours = sourceTime ? (Date.now() - new Date(sourceTime).getTime()) / 36e5 : Infinity;
+      const status = staleHours > 36 ? '資料過舊' : '參考匯率';
+      const result = {};
+      for (const code of ['TWD', 'CNY', 'JPY', 'THB']) {
+        const price = Number(data.rates[code]);
+        if (Number.isFinite(price)) result[code] = { price, source: 'ExchangeRate-API', timestamp: sourceTime, status };
+      }
+      return result;
+    }
+
+    async function fetchGoldQuote() {
+      const res = await fetchWithTimeout('https://api.gold-api.com/price/XAU');
+      if (!res.ok) throw new Error(`Gold HTTP ${res.status}`);
+      const data = await res.json();
+      const price = Number(data.price);
+      if (!Number.isFinite(price)) throw new Error('Invalid gold response');
+      return { price, source: 'Gold API', timestamp: data.updatedAt || data.updated_at || Date.now(), status: '公開報價' };
+    }
+
+    async function fetchTltQuote() {
+      // 瀏覽器端因 CORS 及金鑰限制，美債 ETF 依賴 TradingView 官方圖表即時連動
+      return { price: null, source: 'TradingView', detail: '依賴下方 TradingView 實時圖表', status: 'TV 即時圖' };
+    }
+
+    async function triggerRateUpdate() {
+      if (isUpdating) return;
+      isUpdating = true;
+      const prevRates = { ...rates };
+      try {
+        const [fxResult, tltResult, goldResult] = await Promise.allSettled([
+          fetchForexQuotes(), fetchTltQuote(), fetchGoldQuote()
+        ]);
+
+        const quotes = {};
+        if (fxResult.status === 'fulfilled') Object.assign(quotes, fxResult.value);
+        if (tltResult.status === 'fulfilled') quotes.US20Y = tltResult.value;
+        if (goldResult.status === 'fulfilled') quotes.XAU = goldResult.value;
+
+        for (const cfg of ASSET_CONFIG) {
+          const key = cfg.id === 'us20y' ? 'US20Y' : cfg.id.toUpperCase();
+          const quote = quotes[key] || { detail: '來源暫時不可用或被瀏覽器阻擋' };
+          if (Number.isFinite(quote.price)) rates[key] = quote.price;
+          updateCardUI(cfg.id, quote, prevRates[key], cfg.decimals, cfg.prefix, cfg.suffix);
+        }
+        calculateRates();
+      } finally {
+        isUpdating = false;
+      }
+    }
+
+    function calcGoldOunce() {
+      if (!Number.isFinite(rates.XAU) || !Number.isFinite(rates.TWD)) return;
+      const goldUsd = rates.XAU;
+      document.getElementById('calcBase').value = 'USD';
+      document.getElementById('calcAmount').value = goldUsd.toFixed(0);
+      calculateRates();
+    }
+
+    function toggleCalculator() {
+      const modal = document.getElementById('calculatorModal');
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        calculateRates();
+      }
+    }
+
+    function setQuickCalc(base, amount) {
+      document.getElementById('calcBase').value = base;
+      document.getElementById('calcAmount').value = amount;
+      calculateRates();
+    }
+
+    function calculateRates() {
+      const base = document.getElementById('calcBase').value;
+      const amount = parseFloat(document.getElementById('calcAmount').value) || 0;
+      const container = document.getElementById('calcResultsContainer');
+      if (!container) return;
+
+      if (!Number.isFinite(rates[base])) {
+        container.innerHTML = '<div class="p-4 text-sm text-amber-400">所選幣別尚無可用公開匯率，暫時無法換算。</div>';
+        return;
+      }
+      const amountInUSD = amount / rates[base];
+
+      const targetCurrencies = [
+        { code: 'TWD', name: '新台幣', flag: '🇹🇼', decimals: 2 },
+        { code: 'USD', name: '美元', flag: '🇺🇸', decimals: 2 },
+        { code: 'JPY', name: '日圓', flag: '🇯🇵', decimals: 2 },
+        { code: 'CNY', name: '人民幣', flag: '🇨🇳', decimals: 4 },
+        { code: 'THB', name: '泰銖', flag: '🇹🇭', decimals: 2 }
+      ];
+
+      container.innerHTML = targetCurrencies
+        .filter(c => c.code !== base)
+        .map(c => {
+          if (!Number.isFinite(rates[c.code])) {
+            return `<div class="p-3 bg-slate-800 border border-slate-700/80 rounded-xl text-sm text-slate-400">${c.flag} ${c.name} (${c.code})：暫無資料</div>`;
+          }
+          const converted = amountInUSD * rates[c.code];
+          return `
+            <div class="p-3 bg-slate-800 border border-slate-700/80 rounded-xl flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">${c.flag}</span>
+                <div>
+                  <div class="text-xs text-slate-400">${c.name} (${c.code})</div>
+                  <div class="text-base font-bold font-mono text-emerald-400">
+                    ${converted.toLocaleString(undefined, { minimumFractionDigits: c.decimals, maximumFractionDigits: c.decimals })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('calculatorModal');
+      if (event.target === modal) {
+        modal.classList.add('hidden');
+      }
+    };
+
+    // Initialize application once
+    window.onload = function () {
+      try {
+        const savedTheme = localStorage.getItem('market-dashboard-theme');
+        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        if (savedTheme === 'light' || (!savedTheme && prefersLight)) {
+          currentTheme = 'light';
+          document.documentElement.classList.remove('dark');
+          document.getElementById('themeIconSun')?.classList.add('hidden');
+          document.getElementById('themeIconMoon')?.classList.remove('hidden');
+        } else {
+          currentTheme = 'dark';
+          document.documentElement.classList.add('dark');
+          document.getElementById('themeIconSun')?.classList.remove('hidden');
+          document.getElementById('themeIconMoon')?.classList.add('hidden');
+        }
+      } catch (_) {}
+
+      reloadAllCharts();
+      void triggerRateUpdate();
+      startCountdownTimer();
+    };
+  </script>
+</body>
+</html>
